@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MoveOut — Treinos</title>
+<link rel="stylesheet" href="css/app.css">
+<style>
+  .builder { display: grid; grid-template-columns: 1fr 290px; gap: 18px; }
+  .builder-main { display: flex; flex-direction: column; gap: 14px; }
+  .builder-name { background: var(--bg2); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+  .builder-name input { background: transparent; border: none; outline: none; font-family: 'Lato',sans-serif; font-size: 15px; font-weight: 700; color: var(--text); width: 100%; }
+  .builder-name input::placeholder { color: var(--muted2); }
+  .bloco { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .bloco-hdr { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: var(--bg3); border-bottom: 1px solid var(--border); }
+  .bloco-title { font-weight: 700; font-size: 14px; }
+  .bloco-tag { padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; background: var(--green-light); color: var(--green); }
+  .ex-table { width: 100%; border-collapse: collapse; }
+  .ex-table th { font-size: 11px; color: var(--muted); font-weight: 700; text-align: left; padding: 8px 14px; border-bottom: 1px solid var(--border); }
+  .ex-table td { padding: 9px 14px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+  .ex-table tr:last-child td { border-bottom: none; }
+  .ex-table tr:hover td { background: var(--bg3); }
+  .ex-num { width: 52px; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 5px 6px; color: var(--text); font-size: 13px; text-align: center; outline: none; font-family: 'Lato',sans-serif; }
+  .ex-num:focus { border-color: var(--border2); }
+  .ex-thumb { width: 36px; height: 28px; border-radius: 5px; background: var(--bg3); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .add-ex-btn { padding: 9px 14px; display: flex; align-items: center; gap: 8px; color: var(--green); font-size: 13px; font-weight: 700; cursor: pointer; }
+  .add-ex-btn:hover { background: var(--bg3); }
+  .add-bloco { background: var(--bg2); border: 2px dashed var(--border); border-radius: var(--radius); padding: 18px; text-align: center; color: var(--muted); cursor: pointer; transition: all .14s; }
+  .add-bloco:hover { border-color: var(--border2); color: var(--green); }
+  .sb-panel { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; }
+  .sb-panel label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+  .sb-panel select, .sb-panel input { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 10px; color: var(--text); font-family: 'Lato',sans-serif; font-size: 13px; outline: none; }
+  .sb-panel select:focus, .sb-panel input:focus { border-color: var(--border2); }
+  .sb-textarea { width: 100%; resize: none; min-height: 70px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 10px; color: var(--text); font-family: 'Lato',sans-serif; font-size: 13px; outline: none; }
+  .pick-ex-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-height: 350px; overflow-y: auto; }
+  .pick-ex-item { padding: 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; transition: all .12s; }
+  .pick-ex-item:hover { border-color: var(--green); background: var(--green-light); }
+  .pick-ex-item .name { font-size: 12px; font-weight: 700; }
+  .pick-ex-item .cat { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  @media (max-width: 900px) { .builder { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<div class="app-shell">
+  <div id="sidebar-mount"></div>
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title">Builder de Treino</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-sm">Guardar Rascunho</button>
+        <button class="btn btn-primary btn-sm" onclick="saveTreino()">💾 Guardar Treino</button>
+      </div>
+    </div>
+    <div class="content">
+      <div class="builder">
+        <div class="builder-main">
+          <div class="builder-name">
+            <input type="text" id="treino-nome" placeholder="Nome do treino (ex: PT Joana Lima | Março 26 S3 | Treino A)" value="PT Maria Inês N. | Março 26 S2 | Treino C — Full Body 3"/>
+          </div>
+          <div id="blocos-container"></div>
+          <div class="add-bloco" onclick="addBloco()">
+            <div style="font-size:20px;margin-bottom:4px">＋</div>
+            Adicionar bloco (Aquecimento, Circuito, Força, Cardio, Flexibilidade…)
+          </div>
+        </div>
+        <div>
+          <div class="sb-panel">
+            <label>Cliente</label>
+            <select id="sb-cliente"><option value="1">Maria Inês N.</option><option value="2">Joana Lima</option><option value="3">Marta H.</option></select>
+          </div>
+          <div class="sb-panel">
+            <label>Semana / Sessão</label>
+            <input type="text" id="sb-semana" value="Março 26 S2"/>
+          </div>
+          <div class="sb-panel">
+            <label>Tipo de Treino</label>
+            <select id="sb-tipo"><option>Full Body</option><option>Upper Body</option><option>Lower Body</option><option>Glúteo + Força</option><option>Cardio Metabolic</option><option>Mobilidade</option><option>Outdoor</option></select>
+          </div>
+          <div class="sb-panel">
+            <label>Duração estimada</label>
+            <input type="text" id="sb-dur" value="50 min"/>
+          </div>
+          <div class="sb-panel">
+            <label>Notas do treinador</label>
+            <textarea class="sb-textarea" id="sb-notas" placeholder="Progressão, observações..."></textarea>
+          </div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="saveTreino()">💾 Guardar Treino</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Escolher Exercício -->
+<div class="modal-overlay" id="modalPickEx">
+  <div class="modal">
+    <div class="modal-hdr"><h2>Escolher Exercício</h2><button class="modal-close" onclick="closeModal('modalPickEx')">✕</button></div>
+    <div class="modal-body">
+      <input type="text" id="pick-search" placeholder="Pesquisar..." style="width:100%;background:var(--bg3);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;font-family:'Lato',sans-serif;font-size:13px;outline:none;margin-bottom:14px" oninput="renderPickEx()"/>
+      <div class="pick-ex-grid" id="pick-ex-grid"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/app.js"></script>
+<script src="js/sidebar.js"></script>
+<script>
+document.getElementById('sidebar-mount').innerHTML = renderSidebar('treinos');
+
+const EXERCICIOS = [
+  { nome:'Pike Push Up', cat:'Upper Body', emoji:'🤸' },
+  { nome:'Frog Pump', cat:'Glúteo', emoji:'🐸' },
+  { nome:'Agachamento Peso Corporal', cat:'Lower Body', emoji:'🦵' },
+  { nome:'Prancha Lateral', cat:'Core', emoji:'🧘' },
+  { nome:'Gato Camelo', cat:'Mobilidade', emoji:'🐱' },
+  { nome:'Lunge Dinâmico', cat:'Lower Body', emoji:'🏃' },
+  { nome:'Remada c/ Toalha', cat:'Upper Body', emoji:'💪' },
+  { nome:'Mobilidade Torácica', cat:'Mobilidade', emoji:'🔄' },
+  { nome:'Flexões', cat:'Upper Body', emoji:'⬆️' },
+  { nome:'Polichinelos', cat:'Cardio', emoji:'🎯' },
+  { nome:'Hip Thrust', cat:'Glúteo', emoji:'🍑' },
+  { nome:'Dead Bug', cat:'Core', emoji:'🐛' },
+];
+
+let blocos = [
+  { id: 'b1', nome: 'Aquecimento', tipo: 'Mobilidade e Ativação', exercicios: [
+    { nome:'Mobilidade Torácica', emoji:'🔄', series:'1', reps:'10', descanso:'' },
+    { nome:'Gato Camelo', emoji:'🐱', series:'1', reps:"30''", descanso:'' },
+    { nome:'Agachamento Peso Corporal', emoji:'🦵', series:'—', reps:"30''", descanso:'' },
+    { nome:'Remada c/ Toalha', emoji:'💪', series:'—', reps:"30''", descanso:'' },
+  ]},
+  { id: 'b2', nome: 'Circuito', tipo: 'Treino Intervalado', exercicios: [
+    { nome:'Pike Push Up', emoji:'🤸', series:'3', reps:"50''", descanso:'15' },
+    { nome:'Remada C/ Toalha Vertical', emoji:'💪', series:'3', reps:'50', descanso:'15' },
+    { nome:'Prancha Lateral', emoji:'🧘', series:'3', reps:'50', descanso:'15' },
+    { nome:'Frog Pump', emoji:'🐸', series:'3', reps:'50', descanso:'15' },
+  ]}
+];
+
+let pickTargetBlocoId = null;
+
+function renderBlocos() {
+  document.getElementById('blocos-container').innerHTML = blocos.map(b => `
+    <div class="bloco" id="bloco-${b.id}" style="margin-bottom:14px">
+      <div class="bloco-hdr">
+        <input value="${b.nome}" onchange="b_updateNome('${b.id}',this.value)" style="background:transparent;border:none;outline:none;font-family:'Lato',sans-serif;font-weight:700;font-size:14px;color:var(--text);flex:1"/>
+        <span class="bloco-tag">${b.tipo}</span>
+        <button class="btn btn-sm" onclick="pickEx('${b.id}')">+ Exercício</button>
+        <button class="btn btn-sm btn-danger" onclick="removeBloco('${b.id}')" style="padding:5px 8px">✕</button>
+      </div>
+      <table class="ex-table">
+        <thead><tr>
+          <th style="width:46px"></th>
+          <th>Exercício</th>
+          <th style="width:65px">Séries</th>
+          <th style="width:75px">Reps</th>
+          ${b.exercicios.some(e=>e.descanso!==undefined && e.descanso!=='') || b.tipo.includes('Interval') || b.tipo.includes('Circuito') ? '<th style="width:70px">Desc.</th>' : ''}
+          <th style="width:36px"></th>
+        </tr></thead>
+        <tbody>
+          ${b.exercicios.map((e,i) => `
+            <tr>
+              <td><div class="ex-thumb">${e.emoji}</div></td>
+              <td style="font-weight:600">${e.nome}</td>
+              <td><input class="ex-num" value="${e.series}" onchange="updateEx('${b.id}',${i},'series',this.value)"/></td>
+              <td><input class="ex-num" value="${e.reps}" onchange="updateEx('${b.id}',${i},'reps',this.value)"/></td>
+              ${b.exercicios.some(ex=>ex.descanso!==undefined) ? `<td><input class="ex-num" value="${e.descanso||''}" onchange="updateEx('${b.id}',${i},'descanso',this.value)"/></td>` : ''}
+              <td><button onclick="removeEx('${b.id}',${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:2px">×</button></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+      <div class="add-ex-btn" onclick="pickEx('${b.id}')">+ Adicionar exercício</div>
+    </div>`).join('');
+}
+
+function b_updateNome(id, val) { blocos.find(b=>b.id===id).nome = val; }
+function updateEx(bid, i, field, val) { blocos.find(b=>b.id===bid).exercicios[i][field] = val; }
+function removeEx(bid, i) { blocos.find(b=>b.id===bid).exercicios.splice(i,1); renderBlocos(); }
+function removeBloco(id) { blocos = blocos.filter(b=>b.id!==id); renderBlocos(); }
+
+function addBloco() {
+  const tipos = ['Força','Circuito','Cardio','Flexibilidade','Cool Down'];
+  const tipo = prompt('Tipo de bloco:', 'Circuito') || 'Circuito';
+  blocos.push({ id:'b'+Date.now(), nome:tipo, tipo, exercicios:[] });
+  renderBlocos();
+}
+
+function pickEx(blocoId) {
+  pickTargetBlocoId = blocoId;
+  renderPickEx();
+  openModal('modalPickEx');
+}
+
+function renderPickEx() {
+  const q = (document.getElementById('pick-search')?.value||'').toLowerCase();
+  const grid = document.getElementById('pick-ex-grid');
+  grid.innerHTML = EXERCICIOS.filter(e=>e.nome.toLowerCase().includes(q)||e.cat.toLowerCase().includes(q))
+    .map(e => `<div class="pick-ex-item" onclick="addExToBloco('${e.nome}','${e.emoji}','${e.cat}')">
+      <div style="font-size:20px;margin-bottom:4px">${e.emoji}</div>
+      <div class="name">${e.nome}</div>
+      <div class="cat">${e.cat}</div>
+    </div>`).join('') +
+    `<div class="pick-ex-item" style="border-style:dashed;align-items:center;justify-content:center;display:flex;flex-direction:column;gap:4px" onclick="window.location.href='exercicios.html'">
+      <div style="font-size:20px">+</div>
+      <div class="name" style="text-align:center">Ir à Biblioteca</div>
+    </div>`;
+}
+
+function addExToBloco(nome, emoji, cat) {
+  const b = blocos.find(b=>b.id===pickTargetBlocoId);
+  if(b) b.exercicios.push({ nome, emoji, series:'3', reps:'12', descanso:'30' });
+  renderBlocos(); closeModal('modalPickEx');
+  toast(`"${nome}" adicionado!`);
+}
+
+function saveTreino() {
+  const nome = document.getElementById('treino-nome').value;
+  if(!nome) { toast('Preenche o nome do treino','error'); return; }
+  toast(`"${nome}" guardado com sucesso!`);
+}
+
+if (getUrlParam('new') === '1') {
+  document.getElementById('treino-nome').value = '';
+  blocos = [{ id:'b'+Date.now(), nome:'Aquecimento', tipo:'Mobilidade e Ativação', exercicios:[] }];
+}
+
+renderBlocos();
+</script>
+</body>
+</html>

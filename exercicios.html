@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MoveOut — Biblioteca de Exercícios</title>
+<link rel="stylesheet" href="css/app.css">
+<style>
+  .filters { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+  .search-input { background: var(--bg2); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 9px 14px; color: var(--text); font-family: 'Lato', sans-serif; font-size: 13px; outline: none; width: 260px; }
+  .search-input:focus { border-color: var(--border2); }
+  .chip { padding: 6px 13px; border-radius: 20px; font-size: 12px; font-weight: 700; border: 1.5px solid var(--border); background: var(--bg2); color: var(--text2); cursor: pointer; transition: all .12s; white-space: nowrap; }
+  .chip:hover, .chip.active { border-color: var(--green); background: var(--green-light); color: var(--green); }
+  .ex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+  .ex-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: all .13s; }
+  .ex-card:hover { border-color: var(--border2); box-shadow: 0 2px 10px rgba(0,0,0,.06); }
+  .ex-video { width: 100%; height: 150px; background: var(--bg3); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+  .ex-video iframe { width: 100%; height: 100%; border: none; }
+  .ex-video-placeholder { display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--muted); cursor: pointer; }
+  .ex-video-placeholder svg { width: 36px; height: 36px; opacity: .4; }
+  .ex-body { padding: 14px; }
+  .ex-name { font-size: 14px; font-weight: 900; margin-bottom: 4px; }
+  .ex-cat { display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; background: var(--green-light); color: var(--green); margin-bottom: 8px; }
+  .ex-desc { font-size: 12px; color: var(--text2); line-height: 1.5; margin-bottom: 10px; }
+  .ex-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+  .ex-tag { padding: 2px 7px; border-radius: 5px; font-size: 10px; background: var(--bg3); color: var(--muted); }
+  .add-ex-card { border: 2px dashed var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 200px; color: var(--muted); gap: 8px; transition: all .13s; background: var(--bg2); border-radius: var(--radius); cursor: pointer; }
+  .add-ex-card:hover { border-color: var(--border2); color: var(--green); }
+  .pt-badge { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; background: #FEF3C7; color: #92400E; border-radius: var(--radius-sm); font-size: 12px; font-weight: 700; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<div class="app-shell">
+  <div id="sidebar-mount"></div>
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title">Biblioteca de Exercícios</div>
+      <button class="btn btn-primary btn-sm" onclick="openModal('modalNovoEx')">+ Novo Exercício</button>
+    </div>
+    <div class="content">
+      <div class="pt-badge">🔒 Área privada — só visível para ti (PT)</div>
+      <div class="filters">
+        <input class="search-input" id="ex-search" placeholder="Pesquisar exercício..." oninput="filterEx()"/>
+        <span class="chip active" onclick="setCategoria(this,'')">Todos</span>
+        <span class="chip" onclick="setCategoria(this,'Glúteo')">Glúteo</span>
+        <span class="chip" onclick="setCategoria(this,'Upper')">Upper Body</span>
+        <span class="chip" onclick="setCategoria(this,'Lower')">Lower Body</span>
+        <span class="chip" onclick="setCategoria(this,'Core')">Core</span>
+        <span class="chip" onclick="setCategoria(this,'Mobilidade')">Mobilidade</span>
+        <span class="chip" onclick="setCategoria(this,'Cardio')">Cardio</span>
+      </div>
+      <div class="ex-grid" id="ex-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Novo Exercício -->
+<div class="modal-overlay" id="modalNovoEx">
+  <div class="modal">
+    <div class="modal-hdr"><h2>Novo Exercício</h2><button class="modal-close" onclick="closeModal('modalNovoEx')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Nome</label><input id="ex-nome" type="text" placeholder="Ex: Pike Push Up"/></div>
+      <div class="form-row">
+        <div class="form-group"><label>Categoria</label>
+          <select id="ex-cat"><option>Glúteo</option><option>Upper Body</option><option>Lower Body</option><option>Core</option><option>Mobilidade</option><option>Cardio</option></select>
+        </div>
+        <div class="form-group"><label>Nível</label>
+          <select id="ex-nivel"><option>Iniciante</option><option>Intermédio</option><option>Avançado</option></select>
+        </div>
+      </div>
+      <div class="form-group"><label>Link Vídeo YouTube / Google Drive</label><input id="ex-video" type="url" placeholder="https://youtube.com/watch?v=..."/></div>
+      <div class="form-group"><label>Descrição / Técnica</label><textarea id="ex-desc" style="resize:none;min-height:70px" placeholder="Como executar corretamente..."></textarea></div>
+      <div class="form-group"><label>Músculos trabalhados (separados por vírgula)</label><input id="ex-tags" type="text" placeholder="Ex: Glúteo, Isquiotibiais, Core"/></div>
+      <div class="form-actions">
+        <button class="btn" onclick="closeModal('modalNovoEx')">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveEx()">Guardar Exercício</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/app.js"></script>
+<script src="js/sidebar.js"></script>
+<script>
+document.getElementById('sidebar-mount').innerHTML = renderSidebar('exercicios');
+
+let catFiltro = '';
+let allEx = [
+  { id:'1', nome:'Pike Push Up', cat:'Upper Body', nivel:'Intermédio', video_url:'https://www.youtube.com/embed/spoTjMDFMlI', desc:'Inicia em posição de flexão com as ancas levantadas formando um V invertido. Dobra os cotovelos e baixa a cabeça ao chão.', tags:['Ombros','Triceps','Core'] },
+  { id:'2', nome:'Frog Pump', cat:'Glúteo', nivel:'Iniciante', video_url:'https://www.youtube.com/embed/nq6zHMXuHbI', desc:'Deita de costas, solas dos pés juntas, joelhos abertos. Eleva as ancas contraindo os glúteos no topo.', tags:['Glúteo','Adutores'] },
+  { id:'3', nome:'Agachamento Peso Corporal', cat:'Lower Body', nivel:'Iniciante', video_url:'', desc:'Pés à largura dos ombros, costas neutras. Baixa até os joelhos chegarem a 90° e sobe contraindo glúteo.', tags:['Quadriceps','Glúteo','Isquiotibiais'] },
+  { id:'4', nome:'Prancha Lateral Isométrica', cat:'Core', nivel:'Iniciante', video_url:'', desc:'Apoio lateral no antebraço, corpo em linha reta. Mantém a posição sem deixar a anca cair.', tags:['Oblíquos','Core','Estabilizadores'] },
+  { id:'5', nome:'Gato Camelo', cat:'Mobilidade', nivel:'Iniciante', video_url:'https://www.youtube.com/embed/kqnua4rHVVA', desc:'Em 4 apoios, alterna entre arquear e arredondar a coluna de forma lenta e controlada.', tags:['Coluna','Mobilidade','Aquecimento'] },
+  { id:'6', nome:'Lunge Dinâmico', cat:'Lower Body', nivel:'Iniciante', video_url:'', desc:'Da posição de pé, dá um passo largo à frente baixando o joelho traseiro ao chão. Alterna as pernas.', tags:['Quadriceps','Glúteo','Equilíbrio'] },
+  { id:'7', nome:'Remada c/ Toalha', cat:'Upper Body', nivel:'Iniciante', video_url:'', desc:'Prende a toalha numa porta ou poste. Inclina o corpo para trás e puxa a toalha em direção ao peito.', tags:['Costas','Biceps','Core'] },
+  { id:'8', nome:'Mobilidade Torácica', cat:'Mobilidade', nivel:'Iniciante', video_url:'', desc:'Em 4 apoios, coloca uma mão na cabeça e roda o tronco abrindo o cotovelo para o teto. Alterna.', tags:['Torácica','Rotação','Mobilidade'] },
+];
+
+function getYouTubeId(url) {
+  if (!url) return null;
+  const m = url.match(/(?:embed\/|watch\?v=|youtu\.be\/)([^&\s]+)/);
+  return m ? m[1] : null;
+}
+
+function renderEx(list) {
+  const grid = document.getElementById('ex-grid');
+  grid.innerHTML = list.map(e => {
+    const ytId = getYouTubeId(e.video_url);
+    const videoHTML = ytId
+      ? `<iframe src="https://www.youtube.com/embed/${ytId}?rel=0&modestbranding=1" allowfullscreen></iframe>`
+      : `<div class="ex-video-placeholder" onclick="openModal('modalNovoEx')">
+           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+           <span style="font-size:11px">Adicionar vídeo</span>
+         </div>`;
+    return `
+      <div class="ex-card">
+        <div class="ex-video">${videoHTML}</div>
+        <div class="ex-body">
+          <span class="ex-cat">${e.cat}</span>
+          <div class="ex-name">${e.nome}</div>
+          <div class="ex-desc">${e.desc}</div>
+          <div class="ex-tags">${e.tags.map(t=>`<span class="ex-tag">${t}</span>`).join('')}<span class="ex-tag">${e.nivel}</span></div>
+        </div>
+      </div>`;
+  }).join('') + `
+    <div class="add-ex-card" onclick="openModal('modalNovoEx')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg>
+      <span style="font-size:13px;font-weight:700">Adicionar Exercício</span>
+    </div>`;
+}
+
+function setCategoria(el, cat) {
+  catFiltro = cat;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  filterEx();
+}
+
+function filterEx() {
+  const q = document.getElementById('ex-search').value.toLowerCase();
+  renderEx(allEx.filter(e =>
+    (!catFiltro || e.cat === catFiltro) &&
+    (e.nome.toLowerCase().includes(q) || e.tags.join(' ').toLowerCase().includes(q))
+  ));
+}
+
+function saveEx() {
+  const nome = document.getElementById('ex-nome').value.trim();
+  if(!nome) { toast('Preenche o nome do exercício', 'error'); return; }
+  allEx.unshift({
+    id: String(Date.now()), nome,
+    cat: document.getElementById('ex-cat').value,
+    nivel: document.getElementById('ex-nivel').value,
+    video_url: document.getElementById('ex-video').value,
+    desc: document.getElementById('ex-desc').value,
+    tags: document.getElementById('ex-tags').value.split(',').map(t=>t.trim()).filter(Boolean)
+  });
+  filterEx(); closeModal('modalNovoEx'); toast(`"${nome}" adicionado à biblioteca!`);
+}
+
+renderEx(allEx);
+</script>
+</body>
+</html>

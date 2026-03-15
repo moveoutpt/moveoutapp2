@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MoveOut — Programas</title>
+<link rel="stylesheet" href="css/app.css">
+<style>
+  .prog-hero { background: var(--green-bg); border-radius: var(--radius); padding: 22px 26px; margin-bottom: 22px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; }
+  .prog-hero h2 { font-size: 20px; font-weight: 900; color: #fff; margin-bottom: 4px; }
+  .prog-hero p { font-size: 13px; color: rgba(255,255,255,.65); }
+  .prog-filters { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
+  .search-input { background: var(--bg2); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 9px 14px; color: var(--text); font-family: 'Lato', sans-serif; font-size: 13px; outline: none; width: 240px; }
+  .prog-section { margin-bottom: 28px; }
+  .prog-section-title { font-size: 16px; font-weight: 900; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .prog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+  .prog-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: all .13s; }
+  .prog-card:hover { border-color: var(--border2); box-shadow: 0 3px 12px rgba(0,0,0,.08); }
+  .prog-thumb { width: 100%; height: 145px; display: flex; align-items: center; justify-content: center; font-size: 40px; position: relative; }
+  .prog-thumb iframe { width: 100%; height: 100%; border: none; position: absolute; inset: 0; }
+  .prog-overlay { position: absolute; top: 8px; left: 8px; display: flex; gap: 5px; }
+  .pb { padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; }
+  .pb-free { background: var(--green); color: #fff; }
+  .pb-premium { background: var(--accent); color: #fff; }
+  .pb-dur { background: rgba(0,0,0,.55); color: #fff; }
+  .prog-body { padding: 13px; }
+  .prog-name { font-size: 14px; font-weight: 900; margin-bottom: 4px; }
+  .prog-desc { font-size: 12px; color: var(--text2); line-height: 1.5; margin-bottom: 10px; }
+  .prog-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .prog-tag { padding: 3px 7px; border-radius: 6px; font-size: 10px; font-weight: 700; background: var(--bg3); color: var(--muted); }
+  .prog-price { font-size: 14px; font-weight: 900; color: var(--text); margin-bottom: 8px; }
+  .prog-action { width: 100%; padding: 9px; border-radius: var(--radius-sm); border: none; font-family: 'Lato', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: background .13s; }
+  .pa-green { background: var(--green); color: #fff; } .pa-green:hover { background: var(--green-mid); }
+  .pa-accent { background: var(--accent); color: #fff; }
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<div class="app-shell">
+  <div id="sidebar-mount"></div>
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title">Programas On Demand</div>
+      <button class="btn btn-primary btn-sm" onclick="openModal('modalNovoPrograma')">+ Novo Programa</button>
+    </div>
+    <div class="content">
+      <div class="prog-hero">
+        <div>
+          <h2>Programas de Treino</h2>
+          <p>Programas online disponíveis a qualquer momento</p>
+        </div>
+      </div>
+      <div class="prog-filters">
+        <input class="search-input" placeholder="Pesquisar programas..."/>
+        <select style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;font-family:'Lato',sans-serif;font-size:13px;color:var(--text2);outline:none">
+          <option>Todos os níveis</option><option>Iniciante</option><option>Intermédio</option><option>Avançado</option>
+        </select>
+      </div>
+
+      <div class="prog-section">
+        <div class="prog-section-title">Programas Gratuitos</div>
+        <div class="prog-grid">
+          <div class="prog-card">
+            <div class="prog-thumb" style="background:linear-gradient(135deg,#d4f5c4,#a8edbc)">
+              🏃
+              <div class="prog-overlay"><span class="pb pb-free">Grátis</span><span class="pb pb-dur">⏱ 42 dias</span></div>
+            </div>
+            <div class="prog-body">
+              <div class="prog-name">Do Zero aos 5KM</div>
+              <div class="prog-desc">Plano de iniciação à corrida outdoor progressivo.</div>
+              <div class="prog-meta"><span class="prog-tag">🌱 Iniciante</span><span class="prog-tag">42 dias</span><span class="prog-tag">Outdoor</span></div>
+              <button class="prog-action pa-green">▶ Começar programa</button>
+            </div>
+          </div>
+          <div class="prog-card">
+            <div class="prog-thumb" style="background:linear-gradient(135deg,#b8e0c4,#d8f3dc)">
+              🧘
+              <div class="prog-overlay"><span class="pb pb-free">Grátis</span><span class="pb pb-dur">⏱ 21 dias</span></div>
+            </div>
+            <div class="prog-body">
+              <div class="prog-name">21 Dias — Move First</div>
+              <div class="prog-desc">3 semanas de movimento progressivo outdoor-first para criar consistência.</div>
+              <div class="prog-meta"><span class="prog-tag">🌱 Iniciante</span><span class="prog-tag">21 dias</span></div>
+              <button class="prog-action pa-green">▶ Começar programa</button>
+            </div>
+          </div>
+          <div class="prog-card" style="border-style:dashed;cursor:pointer" onclick="openModal('modalNovoPrograma')">
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;min-height:220px;color:var(--muted);gap:8px">
+              <div style="font-size:28px">＋</div>
+              <span style="font-size:13px;font-weight:700">Novo Programa</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="prog-section">
+        <div class="prog-section-title">Programas Premium ⭐</div>
+        <div class="prog-grid">
+          <div class="prog-card">
+            <div class="prog-thumb" style="background:linear-gradient(135deg,#fde68a,#fef3c7)">
+              💪
+              <div class="prog-overlay"><span class="pb pb-premium">Premium</span><span class="pb pb-dur">⏱ 30 dias</span></div>
+            </div>
+            <div class="prog-body">
+              <div class="prog-name">Reforço Muscular para Corredores</div>
+              <div class="prog-price">39,99€</div>
+              <div class="prog-meta"><span class="prog-tag">🌱 Iniciante</span><span class="prog-tag">30 dias</span></div>
+              <button class="prog-action pa-accent">🔓 Desbloquear</button>
+            </div>
+          </div>
+          <div class="prog-card">
+            <div class="prog-thumb" style="background:linear-gradient(135deg,#fed7aa,#fef3c7)">
+              🤸
+              <div class="prog-overlay"><span class="pb pb-premium">Premium</span><span class="pb pb-dur">⏱ 30 dias</span></div>
+            </div>
+            <div class="prog-body">
+              <div class="prog-name">Curso Calistenia — Iniciantes</div>
+              <div class="prog-desc">30 dias para levar o treino outdoor ao próximo nível.</div>
+              <div class="prog-price">19,99€</div>
+              <div class="prog-meta"><span class="prog-tag">🌱 Iniciante</span><span class="prog-tag">30 dias</span></div>
+              <button class="prog-action pa-accent">🔓 Desbloquear</button>
+            </div>
+          </div>
+          <div class="prog-card">
+            <div class="prog-thumb" style="background:linear-gradient(135deg,#a7c4f0,#dbeafe)">
+              👤
+              <div class="prog-overlay"><span class="pb pb-premium">Premium</span><span class="pb pb-dur">⏱ 30 dias</span></div>
+            </div>
+            <div class="prog-body">
+              <div class="prog-name">PT Online 3x por Semana</div>
+              <div class="prog-desc">Acompanhamento 1:1 com treinos feitos à tua medida.</div>
+              <div class="prog-price">120€</div>
+              <div class="prog-meta"><span class="prog-tag">Todos</span><span class="prog-tag">30 dias</span></div>
+              <button class="prog-action pa-accent">🔓 Desbloquear</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Novo Programa -->
+<div class="modal-overlay" id="modalNovoPrograma">
+  <div class="modal">
+    <div class="modal-hdr"><h2>Novo Programa</h2><button class="modal-close" onclick="closeModal('modalNovoPrograma')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Nome do Programa</label><input type="text" placeholder="Ex: Full Body 4 Semanas"/></div>
+      <div class="form-row">
+        <div class="form-group"><label>Duração</label><input type="text" placeholder="Ex: 30 dias"/></div>
+        <div class="form-group"><label>Nível</label><select><option>Iniciante</option><option>Intermédio</option><option>Avançado</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Tipo</label><select><option>Gratuito</option><option>Premium</option></select></div>
+        <div class="form-group"><label>Preço (se premium)</label><input type="text" placeholder="Ex: 29,99€"/></div>
+      </div>
+      <div class="form-group"><label>Vídeo de Apresentação (YouTube)</label><input type="url" placeholder="https://youtube.com/watch?v=..."/></div>
+      <div class="form-group"><label>Descrição</label><textarea style="resize:none;min-height:65px" placeholder="Descreve o programa..."></textarea></div>
+      <div class="form-actions">
+        <button class="btn" onclick="closeModal('modalNovoPrograma')">Cancelar</button>
+        <button class="btn btn-primary" onclick="closeModal('modalNovoPrograma');toast('Programa criado!')">Criar Programa</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/app.js"></script>
+<script src="js/sidebar.js"></script>
+<script>
+document.getElementById('sidebar-mount').innerHTML = renderSidebar('programas');
+</script>
+</body>
+</html>

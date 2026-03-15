@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MoveOut — Spots Outdoor</title>
+<link rel="stylesheet" href="css/app.css">
+<style>
+  .spots-hero { background: var(--green-bg); border-radius: var(--radius); padding: 20px 26px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .spots-hero h2 { font-size: 20px; font-weight: 900; color: #fff; margin-bottom: 4px; }
+  .spots-hero p { font-size: 13px; color: rgba(255,255,255,.65); }
+  .spots-filters { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+  .chip { padding: 6px 13px; border-radius: 20px; font-size: 12px; font-weight: 700; border: 1.5px solid var(--border); background: var(--bg2); color: var(--text2); cursor: pointer; transition: all .12s; }
+  .chip:hover, .chip.active { border-color: var(--green); background: var(--green-light); color: var(--green); }
+  .spots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+  .spot-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: all .13s; }
+  .spot-card:hover { border-color: var(--border2); box-shadow: 0 3px 12px rgba(0,0,0,.08); }
+  .spot-img { width: 100%; height: 150px; display: flex; align-items: center; justify-content: center; font-size: 40px; }
+  .spot-body { padding: 14px; }
+  .spot-name { font-size: 14px; font-weight: 900; margin-bottom: 4px; }
+  .spot-loc { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 4px; margin-bottom: 6px; }
+  .spot-desc { font-size: 12px; color: var(--text2); line-height: 1.5; margin-bottom: 10px; }
+  .spot-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+  .spot-tag { padding: 3px 7px; border-radius: 6px; font-size: 10px; font-weight: 700; background: var(--green-light); color: var(--green); }
+  .spot-link { font-size: 12px; color: var(--green); font-weight: 700; display: flex; align-items: center; gap: 4px; text-decoration: none; }
+  .spot-link:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<div class="app-shell">
+  <div id="sidebar-mount"></div>
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title">Spots Outdoor Portugal</div>
+      <button class="btn btn-primary btn-sm" onclick="openModal('modalNovoSpot')">+ Sugerir Spot</button>
+    </div>
+    <div class="content">
+      <div class="spots-hero">
+        <div>
+          <h2>🗺 Spots Outdoor Portugal</h2>
+          <p>Os melhores locais para treinar ao ar livre</p>
+        </div>
+        <button class="btn" style="background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.2);color:#fff" onclick="toast('A localizar...')">
+          📍 Perto de mim
+        </button>
+      </div>
+      <div class="spots-filters" id="chips">
+        <span class="chip active" onclick="setFilter(this,'')">Todos</span>
+        <span class="chip" onclick="setFilter(this,'Vila Franca de Xira')">Vila Franca de Xira</span>
+        <span class="chip" onclick="setFilter(this,'Lisboa')">Lisboa</span>
+        <span class="chip" onclick="setFilter(this,'Porto')">Porto</span>
+        <span class="chip" onclick="setFilter(this,'Setúbal')">Setúbal</span>
+        <span class="chip" onclick="setFilter(this,'Barras')">Barras Fixas</span>
+        <span class="chip" onclick="setFilter(this,'Trilho')">Trilhos</span>
+      </div>
+      <div class="spots-grid" id="spots-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Novo Spot -->
+<div class="modal-overlay" id="modalNovoSpot">
+  <div class="modal">
+    <div class="modal-hdr"><h2>Sugerir Spot</h2><button class="modal-close" onclick="closeModal('modalNovoSpot')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Nome do local</label><input type="text" placeholder="Ex: Parque da Cidade"/></div>
+      <div class="form-row">
+        <div class="form-group"><label>Cidade</label><input type="text" placeholder="Ex: Lisboa"/></div>
+        <div class="form-group"><label>Distrito</label><input type="text" placeholder="Ex: Lisboa"/></div>
+      </div>
+      <div class="form-group"><label>Descrição</label><textarea style="resize:none;min-height:65px" placeholder="Descreve o local..."></textarea></div>
+      <div class="form-group"><label>Equipamentos (separados por vírgula)</label><input type="text" placeholder="Ex: Barras fixas, Relva, Trilhos"/></div>
+      <div class="form-group"><label>Link Google Maps</label><input type="url" placeholder="https://maps.google.com/..."/></div>
+      <div class="form-actions">
+        <button class="btn" onclick="closeModal('modalNovoSpot')">Cancelar</button>
+        <button class="btn btn-primary" onclick="closeModal('modalNovoSpot');toast('Spot sugerido! Obrigado 🙏')">Sugerir Spot</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/app.js"></script>
+<script src="js/sidebar.js"></script>
+<script>
+document.getElementById('sidebar-mount').innerHTML = renderSidebar('spots');
+
+const SPOTS = [
+  { nome:'Calisthenics & Street Workout Park', cidade:'Vila Franca de Xira', emoji:'🏋️', bg:'linear-gradient(135deg,#a8edbc,#d4f5c4)', desc:'Parque de calistenia com barras fixas junto à praia.', tags:['Barras Fixas','Peso Corporal'], maps:'https://maps.google.com/?q=Praia+da+Consolação' },
+  { nome:'Passeio Ribeirinho Vila Franca de Xira', cidade:'Vila Franca de Xira', emoji:'🌊', bg:'linear-gradient(135deg,#bde0f5,#d4eaff)', desc:'Passeio magnífico junto ao Tejo. Ideal para corrida, mobilidade e treino ao ar livre.', tags:['Passeio Amplo','Zona Plana','Corrida'], maps:'https://maps.google.com/?q=Passeio+Ribeirinho+Vila+Franca+de+Xira' },
+  { nome:'Jardim Municipal Constantino Palha', cidade:'Vila Franca de Xira', emoji:'🌳', bg:'linear-gradient(135deg,#d4f5c4,#eafbd4)', desc:'Local perfeito para treino ao fim do dia. Sombra, bancos e barras paralelas.', tags:['Barras Paralelas','Barras Fixas','Banco'], maps:'https://maps.google.com/?q=Jardim+Municipal+Constantino+Palha' },
+  { nome:'Parque Urbano de Alverca', cidade:'Vila Franca de Xira', emoji:'🏖️', bg:'linear-gradient(135deg,#f5d4a8,#fdebd0)', desc:'Circuito de manutenção, zona de corrida e espaço verde.', tags:['Circuito','Corrida','Espaço Verde'], maps:'https://maps.google.com/?q=Parque+Urbano+Alverca' },
+  { nome:'Parque da Cidade do Porto', cidade:'Porto', emoji:'🏙️', bg:'linear-gradient(135deg,#c4d4f5,#dce8ff)', desc:'O maior parque urbano do Porto. Trilhos, lagoa, relva e liberdade de movimento.', tags:['Trilhos','Relva','Lagoa'], maps:'https://maps.google.com/?q=Parque+Cidade+Porto' },
+  { nome:'Parque das Nações', cidade:'Lisboa', emoji:'🌆', bg:'linear-gradient(135deg,#d4f5c4,#b8e8c4)', desc:'Junto ao Tejo com espaços verdes, caminhos largos e equipamento de exercício exterior.', tags:['Corrida','Bicicleta','Zona Plana'], maps:'https://maps.google.com/?q=Parque+das+Nações+Lisboa' },
+  { nome:'Serra da Arrábida', cidade:'Setúbal', emoji:'⛰️', bg:'linear-gradient(135deg,#e8d4f5,#f0e4ff)', desc:'Natureza selvagem para treinos de trilho e hiking. Vistas e ar puro incomparáveis.', tags:['Trilhos','Hiking','Natureza'], maps:'https://maps.google.com/?q=Serra+Arrábida' },
+];
+
+let filtroAtivo = '';
+
+function setFilter(el, f) {
+  filtroAtivo = f;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderSpots();
+}
+
+function renderSpots() {
+  const list = filtroAtivo
+    ? SPOTS.filter(s => s.cidade.includes(filtroAtivo) || s.tags.some(t=>t.includes(filtroAtivo)))
+    : SPOTS;
+  const grid = document.getElementById('spots-grid');
+  grid.innerHTML = list.map(s => `
+    <div class="spot-card">
+      <div class="spot-img" style="background:${s.bg}">${s.emoji}</div>
+      <div class="spot-body">
+        <div class="spot-name">${s.nome}</div>
+        <div class="spot-loc">📍 ${s.cidade}</div>
+        <div class="spot-desc">${s.desc}</div>
+        <div class="spot-tags">${s.tags.map(t=>`<span class="spot-tag">${t}</span>`).join('')}</div>
+        <a href="${s.maps}" target="_blank" class="spot-link">📍 Como chegar →</a>
+      </div>
+    </div>`).join('') + `
+    <div class="spot-card" style="border-style:dashed;cursor:pointer" onclick="openModal('modalNovoSpot')">
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;min-height:200px;color:var(--muted);gap:8px">
+        <div style="font-size:28px">＋</div>
+        <span style="font-size:13px;font-weight:700">Sugerir Spot</span>
+      </div>
+    </div>`;
+}
+
+renderSpots();
+</script>
+</body>
+</html>

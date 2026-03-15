@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MoveOut — Clientes</title>
+<link rel="stylesheet" href="css/app.css">
+<style>
+  .search-bar { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; flex-wrap: wrap; }
+  .search-input { flex: 1; max-width: 300px; background: var(--bg2); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 9px 14px; color: var(--text); font-family: 'Lato', sans-serif; font-size: 13px; outline: none; }
+  .search-input:focus { border-color: var(--border2); }
+  .clients-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+  .client-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; cursor: pointer; transition: all .13s; color: inherit; text-decoration: none; display: block; }
+  .client-card:hover { border-color: var(--border2); box-shadow: 0 2px 10px rgba(0,0,0,.06); transform: translateY(-1px); }
+  .client-top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .client-av { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 15px; flex-shrink: 0; }
+  .client-name { font-size: 14px; font-weight: 700; }
+  .client-goal { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .client-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .c-stat { background: var(--bg3); border-radius: var(--radius-sm); padding: 8px; text-align: center; }
+  .c-stat-v { font-size: 20px; font-weight: 900; }
+  .c-stat-l { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .add-card { border: 2px dashed var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 150px; color: var(--muted); gap: 8px; transition: all .13s; background: var(--bg2); border-radius: var(--radius); cursor: pointer; }
+  .add-card:hover { border-color: var(--border2); color: var(--green); }
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<div class="app-shell">
+  <div id="sidebar-mount"></div>
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title">Clientes</div>
+      <button class="btn btn-primary btn-sm" onclick="openModal('modalNovoCliente')">+ Novo Cliente</button>
+    </div>
+    <div class="content">
+      <div class="search-bar">
+        <input class="search-input" id="search" placeholder="Pesquisar cliente..." oninput="filterClientes()"/>
+        <select id="filter-status" onchange="filterClientes()" style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;font-family:'Lato',sans-serif;font-size:13px;outline:none;color:var(--text2)">
+          <option value="">Todos</option>
+          <option value="ativo">Ativos</option>
+          <option value="inativo">Inativos</option>
+        </select>
+      </div>
+      <div class="clients-grid" id="clients-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Novo Cliente -->
+<div class="modal-overlay" id="modalNovoCliente">
+  <div class="modal">
+    <div class="modal-hdr"><h2>Novo Cliente</h2><button class="modal-close" onclick="closeModal('modalNovoCliente')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>Nome completo</label><input id="c-nome" type="text" placeholder="Ex: Joana Lima"/></div>
+        <div class="form-group"><label>Contacto</label><input id="c-tel" type="text" placeholder="+351 9XX XXX XXX"/></div>
+      </div>
+      <div class="form-group"><label>Email</label><input id="c-email" type="email" placeholder="joana@email.com"/></div>
+      <div class="form-row">
+        <div class="form-group"><label>Objetivo</label>
+          <select id="c-obj"><option>Perda de peso</option><option>Ganho muscular</option><option>Tonificação</option><option>Full Body</option><option>Glúteo + Força</option><option>Mobilidade</option></select>
+        </div>
+        <div class="form-group"><label>Sessões / semana</label>
+          <select id="c-sess"><option value="1">1x / semana</option><option value="2" selected>2x / semana</option><option value="3">3x / semana</option></select>
+        </div>
+      </div>
+      <div class="form-group"><label>Lesões / Limitações</label><textarea id="c-lesoes" style="resize:none;min-height:55px" placeholder="Ex: lombalgia, joelho direito..."></textarea></div>
+      <div class="form-actions">
+        <button class="btn" onclick="closeModal('modalNovoCliente')">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveCliente()">Adicionar Cliente</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/app.js"></script>
+<script src="js/sidebar.js"></script>
+<script>
+document.getElementById('sidebar-mount').innerHTML = renderSidebar('clientes');
+
+const DEMO = [
+  { id:'1', nome:'Joana Lima', objetivo:'Glúteo + Tonificação', status:'ativo', sessoes_semana:2, treinos_total:12, avatar_initials:'JL', avatar_color:'#D8F3DC', avatar_text:'#1B4332' },
+  { id:'2', nome:'Marta H.', objetivo:'Perda de Peso', status:'ativo', sessoes_semana:2, treinos_total:8, avatar_initials:'MH', avatar_color:'#FEF3C7', avatar_text:'#92400E' },
+  { id:'3', nome:'Maria Inês N.', objetivo:'Full Body + Força', status:'inativo', sessoes_semana:3, treinos_total:6, avatar_initials:'MI', avatar_color:'#DBEAFE', avatar_text:'#1E3A8A' },
+];
+let allClientes = [...DEMO];
+
+function renderClientes(list) {
+  const grid = document.getElementById('clients-grid');
+  grid.innerHTML = list.map(c => `
+    <a href="cliente-detalhe.html?id=${c.id}" class="client-card">
+      <div class="client-top">
+        <div class="client-av" style="background:${c.avatar_color};color:${c.avatar_text}">${c.avatar_initials}</div>
+        <div style="flex:1">
+          <div class="client-name">${c.nome}</div>
+          <div class="client-goal">${c.objetivo}</div>
+        </div>
+        <span class="badge badge-${c.status === 'ativo' ? 'active' : 'inactive'}">${c.status === 'ativo' ? 'Ativo' : 'Inativo'}</span>
+      </div>
+      <div class="client-stats">
+        <div class="c-stat"><div class="c-stat-v">${c.treinos_total}</div><div class="c-stat-l">Treinos</div></div>
+        <div class="c-stat"><div class="c-stat-v">${c.sessoes_semana}x</div><div class="c-stat-l">p/ semana</div></div>
+      </div>
+    </a>`).join('') + `
+    <div class="add-card" onclick="openModal('modalNovoCliente')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg>
+      <span style="font-size:13px;font-weight:700">Adicionar Cliente</span>
+    </div>`;
+}
+
+function filterClientes() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const st = document.getElementById('filter-status').value;
+  renderClientes(allClientes.filter(c =>
+    c.nome.toLowerCase().includes(q) &&
+    (!st || c.status === st)
+  ));
+}
+
+function saveCliente() {
+  const nome = document.getElementById('c-nome').value.trim();
+  if (!nome) { toast('Preenche o nome do cliente', 'error'); return; }
+  const initials = nome.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+  const colors = [['#D8F3DC','#1B4332'],['#FEF3C7','#92400E'],['#DBEAFE','#1E3A8A'],['#FCE7F3','#9D174D']];
+  const ci = allClientes.length % colors.length;
+  const novo = {
+    id: String(Date.now()), nome,
+    objetivo: document.getElementById('c-obj').value,
+    sessoes_semana: parseInt(document.getElementById('c-sess').value),
+    status: 'ativo', treinos_total: 0,
+    avatar_initials: initials, avatar_color: colors[ci][0], avatar_text: colors[ci][1]
+  };
+  allClientes.unshift(novo);
+  filterClientes();
+  closeModal('modalNovoCliente');
+  toast(`${nome} adicionado com sucesso!`);
+}
+
+if (getUrlParam('new') === '1') setTimeout(() => openModal('modalNovoCliente'), 200);
+renderClientes(allClientes);
+</script>
+</body>
+</html>

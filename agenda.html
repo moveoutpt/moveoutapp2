@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MoveOut — Agenda</title>
+<link rel="stylesheet" href="css/app.css">
+<style>
+  .agenda-top { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .cal-nav { display: flex; align-items: center; gap: 10px; }
+  .cal-nav button { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text2); font-size: 16px; }
+  .cal-nav button:hover { background: var(--bg3); }
+  .cal-month { font-size: 16px; font-weight: 900; min-width: 170px; }
+  .notion-btn { display: flex; align-items: center; gap: 6px; padding: 7px 13px; background: var(--bg2); border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; color: var(--muted); cursor: pointer; font-weight: 700; margin-left: auto; }
+  .notion-btn:hover { border-color: var(--border2); color: var(--green); }
+  .cal-grid { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 20px; }
+  .cal-header { display: grid; grid-template-columns: repeat(7,1fr); background: var(--bg3); border-bottom: 1px solid var(--border); }
+  .cal-dname { text-align: center; padding: 10px 0; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .cal-body { display: grid; grid-template-columns: repeat(7,1fr); }
+  .cal-cell { min-height: 82px; padding: 7px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); cursor: pointer; transition: background .12s; }
+  .cal-cell:nth-child(7n) { border-right: none; }
+  .cal-cell:hover { background: var(--bg3); }
+  .cal-cell.today { background: rgba(45,106,79,.05); }
+  .cal-num { font-size: 12px; font-weight: 700; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; margin-bottom: 3px; }
+  .cal-cell.today .cal-num { background: var(--green); color: #fff; border-radius: 50%; }
+  .cal-cell.other-month .cal-num { color: var(--muted2); }
+  .cal-ev { font-size: 10px; font-weight: 700; padding: 2px 5px; border-radius: 4px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ev-green { background: var(--green-light); color: var(--green); }
+  .ev-orange { background: #FEF3C7; color: #92400E; }
+  .ev-blue { background: #DBEAFE; color: #1E40AF; }
+  .ev-done { background: #F3F4F6; color: #9CA3AF; }
+  .list-section { margin-bottom: 16px; }
+  .list-day-lbl { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; padding-bottom: 8px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+  .sessao-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 8px; cursor: pointer; transition: border-color .13s; }
+  .sessao-row:hover { border-color: var(--border2); }
+  .sessao-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .sessao-row-info { flex: 1; }
+  .sessao-row-title { font-size: 13px; font-weight: 700; }
+  .sessao-row-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .sessao-status { padding: 3px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; }
+  .st-done { background: var(--green-light); color: var(--green); }
+  .st-sched { background: #EEF2FF; color: #3730A3; }
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<div class="app-shell">
+  <div id="sidebar-mount"></div>
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title">Agenda</div>
+      <button class="btn btn-primary btn-sm" onclick="openModal('modalNovaSessao')">+ Nova Sessão</button>
+    </div>
+    <div class="content">
+      <div class="agenda-top">
+        <div class="cal-nav">
+          <button onclick="changeMonth(-1)">‹</button>
+          <div class="cal-month" id="cal-month-lbl">Março 2026</div>
+          <button onclick="changeMonth(1)">›</button>
+        </div>
+        <div class="notion-btn" onclick="linkNotion()">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect width="14" height="14" rx="3" fill="#000"/><text x="7" y="11" text-anchor="middle" fill="white" font-size="9" font-family="serif" font-weight="900">N</text></svg>
+          Sincronizar Notion
+        </div>
+      </div>
+
+      <div class="cal-grid">
+        <div class="cal-header">
+          <div class="cal-dname">Seg</div><div class="cal-dname">Ter</div><div class="cal-dname">Qua</div>
+          <div class="cal-dname">Qui</div><div class="cal-dname">Sex</div><div class="cal-dname">Sáb</div><div class="cal-dname">Dom</div>
+        </div>
+        <div class="cal-body" id="cal-body"></div>
+      </div>
+
+      <div id="agenda-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Nova Sessão -->
+<div class="modal-overlay" id="modalNovaSessao">
+  <div class="modal">
+    <div class="modal-hdr"><h2>Nova Sessão</h2><button class="modal-close" onclick="closeModal('modalNovaSessao')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Cliente</label>
+        <select id="s-cliente"><option value="1">Joana Lima</option><option value="2">Marta H.</option><option value="3">Maria Inês N.</option></select>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Data</label><input id="s-data" type="date"/></div>
+        <div class="form-group"><label>Hora</label><input id="s-hora" type="time" value="09:00"/></div>
+      </div>
+      <div class="form-group"><label>Tipo de Sessão</label>
+        <select id="s-tipo"><option>Treino PT 1:1</option><option>Treino Grupo</option><option>Avaliação Física</option></select>
+      </div>
+      <div class="form-group"><label>Local / Spot</label>
+        <select id="s-local"><option>Passeio Ribeirinho VFX</option><option>Jardim Municipal</option><option>Parque Urbano Alverca</option><option>A definir</option></select>
+      </div>
+      <div class="form-group"><label>Link Notion (opcional)</label><input id="s-notion" type="url" placeholder="https://notion.so/..."/></div>
+      <div class="form-actions">
+        <button class="btn" onclick="closeModal('modalNovaSessao')">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveSessao()">Marcar Sessão</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/app.js"></script>
+<script src="js/sidebar.js"></script>
+<script>
+document.getElementById('sidebar-mount').innerHTML = renderSidebar('agenda');
+document.getElementById('s-data').value = new Date().toISOString().split('T')[0];
+
+let calY = 2026, calM = 2;
+const MN = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const CLIENTES = { '1':'Joana Lima', '2':'Marta H.', '3':'Maria Inês N.' };
+const EV_COLORS = { '1':'ev-green', '2':'ev-orange', '3':'ev-blue' };
+const DOT_COLORS = { 'ev-green':'#2D6A4F', 'ev-orange':'#E67E22', 'ev-blue':'#2171B5', 'ev-done':'#9CA3AF' };
+
+let events = [
+  { id:'e1', date:'2026-03-16', hora:'09:00', cliente_id:'1', tipo:'Treino PT 1:1', local:'Passeio Ribeirinho VFX', done:false },
+  { id:'e2', date:'2026-03-18', hora:'10:00', cliente_id:'2', tipo:'Cardio', local:'Jardim Municipal', done:false },
+  { id:'e3', date:'2026-03-20', hora:'09:30', cliente_id:'3', tipo:'Full Body', local:'Parque Alverca', done:false },
+  { id:'e4', date:'2026-03-10', hora:'09:00', cliente_id:'1', tipo:'Upper Body', local:'Passeio Ribeirinho VFX', done:true },
+];
+
+function changeMonth(d) { calM += d; if(calM>11){calM=0;calY++;}else if(calM<0){calM=11;calY--;} render(); }
+
+function render() {
+  document.getElementById('cal-month-lbl').textContent = MN[calM] + ' ' + calY;
+  const body = document.getElementById('cal-body');
+  body.innerHTML = '';
+  let start = new Date(calY,calM,1).getDay(); if(start===0)start=7; start--;
+  const dim = new Date(calY,calM+1,0).getDate();
+  const dimp = new Date(calY,calM,0).getDate();
+  const today = new Date();
+  let cells = [];
+  for(let i=start-1;i>=0;i--) cells.push({d:dimp-i,cur:false});
+  for(let i=1;i<=dim;i++) cells.push({d:i,cur:true});
+  while(cells.length%7!==0) cells.push({d:cells.length-dim-start+1,cur:false});
+
+  cells.forEach(c => {
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell' + (!c.cur?' other-month':'');
+    const isToday = c.cur && c.d===today.getDate() && calM===today.getMonth() && calY===today.getFullYear();
+    if(isToday) cell.classList.add('today');
+    const numEl = document.createElement('div'); numEl.className='cal-num'; numEl.textContent=c.d; cell.appendChild(numEl);
+    if(c.cur) {
+      const ds = calY+'-'+String(calM+1).padStart(2,'0')+'-'+String(c.d).padStart(2,'0');
+      events.filter(e=>e.date===ds).forEach(e=>{
+        const ev = document.createElement('div');
+        const col = e.done ? 'ev-done' : (EV_COLORS[e.cliente_id]||'ev-green');
+        ev.className = 'cal-ev ' + col;
+        ev.textContent = (CLIENTES[e.cliente_id]||'?').split(' ')[0] + ' ' + e.hora;
+        cell.appendChild(ev);
+      });
+      cell.onclick = () => { document.getElementById('s-data').value = ds; openModal('modalNovaSessao'); };
+    }
+    body.appendChild(cell);
+  });
+  renderList();
+}
+
+function renderList() {
+  const list = document.getElementById('agenda-list');
+  const mes = events.filter(e => {
+    const d = new Date(e.date); return d.getMonth()===calM && d.getFullYear()===calY;
+  }).sort((a,b)=>a.date.localeCompare(b.date));
+
+  list.innerHTML = `<div style="font-size:14px;font-weight:700;margin-bottom:14px">Sessões — ${MN[calM]} ${calY}</div>`;
+  if(!mes.length) { list.innerHTML += '<div style="color:var(--muted);font-size:13px">Sem sessões este mês.</div>'; return; }
+
+  let lastDate = '';
+  mes.forEach(e => {
+    const d = new Date(e.date);
+    const dk = d.toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long'});
+    const dku = dk.charAt(0).toUpperCase()+dk.slice(1);
+    if(dku!==lastDate) {
+      list.innerHTML += `<div class="list-section"><div class="list-day-lbl">${dku}</div>`;
+      lastDate=dku;
+    }
+    const col = e.done ? 'ev-done' : (EV_COLORS[e.cliente_id]||'ev-green');
+    const dot = DOT_COLORS[col]||'#ccc';
+    list.innerHTML += `
+      <div class="sessao-row" onclick="toggleDone('${e.id}')">
+        <div class="sessao-dot" style="background:${dot}"></div>
+        <div class="sessao-row-info">
+          <div class="sessao-row-title">${CLIENTES[e.cliente_id]} — ${e.tipo}</div>
+          <div class="sessao-row-meta">${e.hora} · ${e.local}</div>
+        </div>
+        <span class="sessao-status ${e.done?'st-done':'st-sched'}">${e.done?'Concluída':'Agendada'}</span>
+      </div>`;
+  });
+}
+
+function toggleDone(id) {
+  const e = events.find(e=>e.id===id);
+  if(e) { e.done=!e.done; render(); toast(e.done?'Sessão marcada como concluída!':'Sessão reaberta'); }
+}
+
+function saveSessao() {
+  const data = document.getElementById('s-data').value;
+  const hora = document.getElementById('s-hora').value;
+  const cid = document.getElementById('s-cliente').value;
+  if(!data||!hora) { toast('Preenche data e hora', 'error'); return; }
+  events.push({ id:'e'+Date.now(), date:data, hora, cliente_id:cid, tipo:document.getElementById('s-tipo').value, local:document.getElementById('s-local').value, done:false });
+  render(); closeModal('modalNovaSessao'); toast('Sessão marcada!');
+}
+
+function linkNotion() {
+  const url = prompt('Cola o link da tua base de dados Notion:','https://notion.so/');
+  if(url && url.startsWith('https://notion')) toast('Notion sincronizado com sucesso!');
+}
+
+render();
+</script>
+</body>
+</html>
