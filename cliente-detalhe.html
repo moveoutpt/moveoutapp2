@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MoveOut — Cliente</title>
+<link rel="stylesheet" href="app.css">
+<style>
+  .back-link { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); text-decoration: none; margin-bottom: 20px; font-weight: 700; }
+  .back-link:hover { color: var(--green); }
+  .cliente-hero { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+  .cliente-av-lg { width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 24px; flex-shrink: 0; }
+  .cliente-hero-info h1 { font-size: 22px; font-weight: 900; margin-bottom: 4px; }
+  .cliente-hero-info p { font-size: 13px; color: var(--muted); }
+  .cliente-hero-actions { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 20px; }
+  .stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; text-align: center; }
+  .stat-val { font-size: 28px; font-weight: 900; line-height: 1; margin-bottom: 4px; }
+  .stat-lbl { font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
+  .tab { padding: 10px 16px; font-size: 13px; font-weight: 700; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all .13s; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--green); border-bottom-color: var(--green); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  .treino-row { display: flex; align-items: center; gap: 12px; padding: 13px 16px; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 8px; cursor: pointer; transition: border-color .13s; text-decoration: none; color: inherit; }
+  .treino-row:hover { border-color: var(--border2); }
+  .treino-row-icon { width: 36px; height: 36px; border-radius: 9px; background: var(--green-light); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; }
+  .treino-row-info { flex: 1; }
+  .treino-row-nome { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+  .treino-row-meta { font-size: 11px; color: var(--muted); }
+  .sessao-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 8px; }
+  .sessao-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .sessao-info { flex: 1; }
+  .sessao-title { font-size: 13px; font-weight: 700; }
+  .sessao-meta { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .info-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+  .info-card h3 { font-size: 13px; font-weight: 700; margin-bottom: 12px; color: var(--text); }
+  .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .info-row:last-child { border-bottom: none; }
+  .info-lbl { color: var(--muted); }
+  .info-val { font-weight: 700; }
+  .progress-bar-outer { background: var(--bg3); border-radius: 4px; height: 8px; margin-top: 6px; }
+  .progress-bar-inner { height: 8px; border-radius: 4px; background: var(--green); }
+  .semana-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; padding-bottom: 8px; border-bottom: 1px solid var(--border); margin-bottom: 8px; margin-top: 16px; }
+  .empty-state { text-align: center; padding: 32px; color: var(--muted); font-size: 13px; }
+  @media (max-width: 768px) {
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .info-grid { grid-template-columns: 1fr; }
+    .cliente-hero-actions { margin-left: 0; width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<div class="app-shell">
+  <div id="sidebar-mount"></div>
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-name">Cliente</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-sm" onclick="openModal('modalEditCliente')">Editar</button>
+        <button class="btn btn-primary btn-sm" onclick="novoTreino()">+ Novo Treino</button>
+      </div>
+    </div>
+    <div class="content">
+      <a href="clientes.html" class="back-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Voltar aos clientes
+      </a>
+
+      <div class="cliente-hero" id="cliente-hero">
+        <div class="cliente-av-lg" id="hero-av"></div>
+        <div class="cliente-hero-info">
+          <h1 id="hero-nome"></h1>
+          <p id="hero-sub"></p>
+        </div>
+        <div class="cliente-hero-actions">
+          <button class="btn btn-sm" onclick="openModal('modalNovaSessao')">+ Sessão</button>
+          <button class="btn btn-primary btn-sm" onclick="novoTreino()">+ Treino</button>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-val" id="s-treinos">0</div>
+          <div class="stat-lbl">Treinos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="s-sessoes">0</div>
+          <div class="stat-lbl">Sessões</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="s-semana">0x</div>
+          <div class="stat-lbl">p/ semana</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="s-status" style="font-size:14px;padding-top:6px"></div>
+          <div class="stat-lbl">Estado</div>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" onclick="setTab('treinos',this)">Treinos</div>
+        <div class="tab" onclick="setTab('sessoes',this)">Sessões</div>
+        <div class="tab" onclick="setTab('progresso',this)">Progresso</div>
+        <div class="tab" onclick="setTab('info',this)">Informações</div>
+      </div>
+
+      <!-- TAB TREINOS -->
+      <div class="tab-content active" id="tab-treinos">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div style="font-size:13px;color:var(--muted)" id="treinos-count"></div>
+          <button class="btn btn-primary btn-sm" onclick="novoTreino()">+ Novo Treino</button>
+        </div>
+        <div id="treinos-list"></div>
+      </div>
+
+      <!-- TAB SESSÕES -->
+      <div class="tab-content" id="tab-sessoes">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div style="font-size:13px;color:var(--muted)" id="sessoes-count"></div>
+          <button class="btn btn-primary btn-sm" onclick="openModal('modalNovaSessao')">+ Nova Sessão</button>
+        </div>
+        <div id="sessoes-list"></div>
+      </div>
+
+      <!-- TAB PROGRESSO -->
+      <div class="tab-content" id="tab-progresso">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="info-card">
+            <h3>Consistência — Março 2026</h3>
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px" id="consistency-grid"></div>
+            <div style="display:flex;gap:12px;margin-top:10px;font-size:11px;color:var(--muted)">
+              <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:var(--green);display:inline-block"></span> Treinou</span>
+              <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:var(--bg3);border:1px solid var(--border);display:inline-block"></span> Sem treino</span>
+            </div>
+          </div>
+          <div class="info-card">
+            <h3>Evolução de Treinos</h3>
+            <div style="margin-top:8px">
+              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>Janeiro</span><span style="font-weight:700;color:var(--green)">8</span></div>
+              <div class="progress-bar-outer"><div class="progress-bar-inner" style="width:55%"></div></div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;margin-top:10px"><span>Fevereiro</span><span style="font-weight:700;color:var(--green)">10</span></div>
+              <div class="progress-bar-outer"><div class="progress-bar-inner" style="width:70%"></div></div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;margin-top:10px"><span>Março</span><span style="font-weight:700;color:var(--green)" id="prog-marco">12</span></div>
+              <div class="progress-bar-outer"><div class="progress-bar-inner" style="width:85%"></div></div>
+            </div>
+          </div>
+          <div class="info-card" style="grid-column:1/-1">
+            <h3>Notas de progresso</h3>
+            <textarea style="width:100%;resize:none;min-height:100px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;font-family:'Lato',sans-serif;font-size:13px;outline:none;color:var(--text)" placeholder="Regista a evolução do cliente, marcos importantes, feedback..."></textarea>
+            <button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="toast('Notas guardadas!')">Guardar notas</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB INFO -->
+      <div class="tab-content" id="tab-info">
+        <div class="info-grid">
+          <div class="info-card">
+            <h3>Dados pessoais</h3>
+            <div class="info-row"><span class="info-lbl">Nome</span><span class="info-val" id="info-nome">—</span></div>
+            <div class="info-row"><span class="info-lbl">Email</span><span class="info-val" id="info-email">—</span></div>
+            <div class="info-row"><span class="info-lbl">Telefone</span><span class="info-val" id="info-tel">—</span></div>
+          </div>
+          <div class="info-card">
+            <h3>Plano de treino</h3>
+            <div class="info-row"><span class="info-lbl">Objetivo</span><span class="info-val" id="info-obj">—</span></div>
+            <div class="info-row"><span class="info-lbl">Sessões/semana</span><span class="info-val" id="info-sess">—</span></div>
+            <div class="info-row"><span class="info-lbl">Estado</span><span class="info-val" id="info-status">—</span></div>
+          </div>
+          <div class="info-card" style="grid-column:1/-1">
+            <h3>Lesões / Limitações</h3>
+            <div style="font-size:13px;color:var(--text2);line-height:1.6" id="info-lesoes">Sem lesões registadas.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Modal Nova Sessão -->
+<div class="modal-overlay" id="modalNovaSessao">
+  <div class="modal">
+    <div class="modal-hdr"><h2>Nova Sessão</h2><button class="modal-close" onclick="closeModal('modalNovaSessao')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>Data</label><input id="ns-data" type="date"/></div>
+        <div class="form-group"><label>Hora</label><input id="ns-hora" type="time" value="09:00"/></div>
+      </div>
+      <div class="form-group"><label>Tipo</label>
+        <select id="ns-tipo"><option>Treino PT 1:1</option><option>Avaliação Física</option><option>Treino Grupo</option></select>
+      </div>
+      <div class="form-group"><label>Local</label>
+        <select id="ns-local"><option>Passeio Ribeirinho VFX</option><option>Jardim Municipal</option><option>Parque Alverca</option><option>A definir</option></select>
+      </div>
+      <div class="form-actions">
+        <button class="btn" onclick="closeModal('modalNovaSessao')">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveSessao()">Marcar Sessão</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Editar Cliente -->
+<div class="modal-overlay" id="modalEditCliente">
+  <div class="modal">
+    <div class="modal-hdr"><h2>Editar Cliente</h2><button class="modal-close" onclick="closeModal('modalEditCliente')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Nome</label><input id="edit-nome" type="text"/></div>
+      <div class="form-group"><label>Email</label><input id="edit-email" type="email"/></div>
+      <div class="form-group"><label>Telefone</label><input id="edit-tel" type="text"/></div>
+      <div class="form-row">
+        <div class="form-group"><label>Objetivo</label>
+          <select id="edit-obj"><option>Perda de peso</option><option>Ganho muscular</option><option>Tonificação</option><option>Full Body</option><option>Glúteo + Força</option></select>
+        </div>
+        <div class="form-group"><label>Sessões/semana</label>
+          <select id="edit-sess"><option value="1">1x</option><option value="2">2x</option><option value="3">3x</option></select>
+        </div>
+      </div>
+      <div class="form-group"><label>Lesões / Limitações</label>
+        <textarea id="edit-lesoes" style="resize:none;min-height:55px"></textarea>
+      </div>
+      <div class="form-group"><label>Estado</label>
+        <select id="edit-status"><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-danger" onclick="if(confirm('Tens a certeza?')){toast('Cliente removido');setTimeout(()=>window.location.href='clientes.html',1000)}">Remover</button>
+        <button class="btn btn-primary" onclick="saveEdit()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
+<script src="sidebar.js"></script>
+<script>
+document.getElementById('sidebar-mount').innerHTML = renderSidebar('clientes');
+
+const CLIENTES = {
+  '1': { id:'1', nome:'Joana Lima', email:'joana@email.com', tel:'+351 912 345 678', objetivo:'Glúteo + Tonificação', sessoes_semana:2, status:'ativo', lesoes:'Sem lesões', treinos_total:12, avatar_initials:'JL', avatar_color:'#D8F3DC', avatar_text:'#1B4332' },
+  '2': { id:'2', nome:'Marta H.', email:'marta@email.com', tel:'+351 913 456 789', objetivo:'Perda de Peso', sessoes_semana:2, status:'ativo', lesoes:'Joelho direito sensível', treinos_total:8, avatar_initials:'MH', avatar_color:'#FEF3C7', avatar_text:'#92400E' },
+  '3': { id:'3', nome:'Maria Inês N.', email:'mariaines@email.com', tel:'+351 914 567 890', objetivo:'Full Body + Força', sessoes_semana:3, status:'inativo', lesoes:'Lombalgia ocasional', treinos_total:6, avatar_initials:'MI', avatar_color:'#DBEAFE', avatar_text:'#1E3A8A' },
+};
+
+const TREINOS_DEMO = {
+  '1': [
+    { id:'t1', nome:'Março 26 S2 | Treino A — Glúteo Força + Triceps', tipo:'Glúteo + Força', data:'2026-03-13', dur:'50 min', status:'concluido' },
+    { id:'t2', nome:'Março 26 S2 | Treino B — Flexões + Pernas', tipo:'Upper + Lower', data:'2026-03-11', dur:'45 min', status:'concluido' },
+    { id:'t3', nome:'Março 26 S1 | Treino C — Cardio', tipo:'Cardio Metabolic', data:'2026-03-06', dur:'40 min', status:'concluido' },
+    { id:'t4', nome:'Março 26 S1 | Treino A — Full Body', tipo:'Full Body', data:'2026-03-04', dur:'55 min', status:'concluido' },
+  ],
+  '2': [
+    { id:'t5', nome:'Março 26 S2 | Treino A — Cardio', tipo:'Cardio', data:'2026-03-12', dur:'45 min', status:'concluido' },
+    { id:'t6', nome:'Março 26 S1 | Treino B — Lower Body', tipo:'Lower Body', data:'2026-03-05', dur:'50 min', status:'concluido' },
+  ],
+  '3': [
+    { id:'t7', nome:'Março 26 S2 | Treino A — Full Body 1', tipo:'Full Body', data:'2026-03-10', dur:'55 min', status:'concluido' },
+  ],
+};
+
+const SESSOES_DEMO = {
+  '1': [
+    { data:'2026-03-16', hora:'09:00', tipo:'Treino PT 1:1', local:'Passeio Ribeirinho VFX', status:'agendada' },
+    { data:'2026-03-18', hora:'09:00', tipo:'Treino PT 1:1', local:'Jardim Municipal', status:'agendada' },
+    { data:'2026-03-13', hora:'09:00', tipo:'Treino PT 1:1', local:'Passeio Ribeirinho VFX', status:'concluida' },
+    { data:'2026-03-11', hora:'09:00', tipo:'Treino PT 1:1', local:'Parque Alverca', status:'concluida' },
+  ],
+  '2': [
+    { data:'2026-03-18', hora:'10:00', tipo:'Treino PT 1:1', local:'Jardim Municipal', status:'agendada' },
+    { data:'2026-03-12', hora:'10:00', tipo:'Treino PT 1:1', local:'Passeio Ribeirinho VFX', status:'concluida' },
+  ],
+  '3': [
+    { data:'2026-03-20', hora:'09:30', tipo:'Avaliação Física', local:'Parque Alverca', status:'agendada' },
+  ],
+};
+
+let clienteId = getUrlParam('id') || '1';
+let cliente = CLIENTES[clienteId] || CLIENTES['1'];
+let sessoes = [...(SESSOES_DEMO[clienteId] || [])];
+
+function load() {
+  document.title = `MoveOut — ${cliente.nome}`;
+  document.getElementById('topbar-name').textContent = cliente.nome;
+
+  const av = document.getElementById('hero-av');
+  av.textContent = cliente.avatar_initials;
+  av.style.background = cliente.avatar_color;
+  av.style.color = cliente.avatar_text;
+
+  document.getElementById('hero-nome').textContent = cliente.nome;
+  document.getElementById('hero-sub').textContent = `${cliente.objetivo} · ${cliente.sessoes_semana}x por semana`;
+
+  document.getElementById('s-treinos').textContent = (TREINOS_DEMO[clienteId]||[]).length;
+  document.getElementById('s-sessoes').textContent = sessoes.length;
+  document.getElementById('s-semana').textContent = cliente.sessoes_semana + 'x';
+  const statusEl = document.getElementById('s-status');
+  statusEl.textContent = cliente.status === 'ativo' ? 'Ativo' : 'Inativo';
+  statusEl.style.color = cliente.status === 'ativo' ? 'var(--green)' : 'var(--danger)';
+
+  document.getElementById('info-nome').textContent = cliente.nome;
+  document.getElementById('info-email').textContent = cliente.email;
+  document.getElementById('info-tel').textContent = cliente.tel;
+  document.getElementById('info-obj').textContent = cliente.objetivo;
+  document.getElementById('info-sess').textContent = cliente.sessoes_semana + 'x por semana';
+  document.getElementById('info-status').textContent = cliente.status === 'ativo' ? 'Ativo' : 'Inativo';
+  document.getElementById('info-lesoes').textContent = cliente.lesoes || 'Sem lesões registadas.';
+
+  document.getElementById('edit-nome').value = cliente.nome;
+  document.getElementById('edit-email').value = cliente.email;
+  document.getElementById('edit-tel').value = cliente.tel;
+  document.getElementById('edit-lesoes').value = cliente.lesoes;
+
+  renderTreinos();
+  renderSessoes();
+  renderConsistency();
+
+  document.getElementById('ns-data').value = new Date().toISOString().split('T')[0];
+}
+
+function renderTreinos() {
+  const treinos = TREINOS_DEMO[clienteId] || [];
+  document.getElementById('treinos-count').textContent = `${treinos.length} treino${treinos.length!==1?'s':''} registados`;
+  const list = document.getElementById('treinos-list');
+  if(!treinos.length) { list.innerHTML = '<div class="empty-state">Sem treinos ainda. Cria o primeiro!</div>'; return; }
+
+  let lastWeek = '';
+  list.innerHTML = treinos.map(t => {
+    const d = new Date(t.data);
+    const week = `Semana de ${d.toLocaleDateString('pt-PT',{day:'numeric',month:'long'})}`;
+    const weekLabel = week !== lastWeek ? `<div class="semana-label">${week}</div>` : '';
+    lastWeek = week;
+    const emoji = { 'Glúteo + Força':'🍑', 'Upper + Lower':'💪', 'Cardio Metabolic':'🏃', 'Full Body':'⚡', 'Lower Body':'🦵', 'Cardio':'🏃', 'Upper Body':'💪' }[t.tipo] || '💪';
+    return `${weekLabel}
+    <a href="treinos.html?id=${t.id}&cliente=${clienteId}" class="treino-row">
+      <div class="treino-row-icon">${emoji}</div>
+      <div class="treino-row-info">
+        <div class="treino-row-nome">${t.nome}</div>
+        <div class="treino-row-meta">${t.tipo} · ${t.dur} · ${new Date(t.data).toLocaleDateString('pt-PT',{day:'numeric',month:'short'})}</div>
+      </div>
+      <span class="badge badge-active">Concluído</span>
+    </a>`;
+  }).join('');
+}
+
+function renderSessoes() {
+  document.getElementById('sessoes-count').textContent = `${sessoes.length} sessão/sessões registadas`;
+  const list = document.getElementById('sessoes-list');
+  if(!sessoes.length) { list.innerHTML = '<div class="empty-state">Sem sessões ainda.</div>'; return; }
+  list.innerHTML = sessoes.sort((a,b)=>b.data.localeCompare(a.data)).map(s => {
+    const done = s.status === 'concluida';
+    const dot = done ? 'var(--muted2)' : 'var(--green)';
+    const d = new Date(s.data).toLocaleDateString('pt-PT',{weekday:'short',day:'numeric',month:'short'});
+    return `<div class="sessao-row">
+      <div class="sessao-dot" style="background:${dot}"></div>
+      <div class="sessao-info">
+        <div class="sessao-title">${s.tipo}</div>
+        <div class="sessao-meta">${d} · ${s.hora} · ${s.local}</div>
+      </div>
+      <span class="badge ${done?'badge-inactive':'badge-active'}">${done?'Concluída':'Agendada'}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderConsistency() {
+  const grid = document.getElementById('consistency-grid');
+  const trainedDays = [4,6,11,13,18,20,25,27];
+  const days = Array.from({length:31},(_,i)=>i+1);
+  const dayNames = ['S','T','Q','Q','S','S','D'];
+  grid.innerHTML = dayNames.map(d=>`<div style="font-size:9px;font-weight:700;color:var(--muted);text-align:center;padding-bottom:2px">${d}</div>`).join('');
+  let firstDay = new Date(2026,2,1).getDay(); if(firstDay===0)firstDay=7; firstDay--;
+  for(let i=0;i<firstDay;i++) grid.innerHTML += `<div></div>`;
+  days.forEach(d => {
+    const trained = trainedDays.includes(d);
+    const isToday = d === 15;
+    grid.innerHTML += `<div title="Março ${d}" style="width:100%;aspect-ratio:1;border-radius:3px;background:${trained?'var(--green)':'var(--bg3)'};border:1px solid ${isToday?'var(--green)':'var(--border)'};cursor:default"></div>`;
+  });
+}
+
+function setTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+function novoTreino() {
+  window.location.href = `treinos.html?new=1&cliente=${clienteId}`;
+}
+
+function saveSessao() {
+  const data = document.getElementById('ns-data').value;
+  const hora = document.getElementById('ns-hora').value;
+  if(!data) { toast('Preenche a data','error'); return; }
+  sessoes.unshift({ data, hora, tipo: document.getElementById('ns-tipo').value, local: document.getElementById('ns-local').value, status:'agendada' });
+  renderSessoes();
+  document.getElementById('s-sessoes').textContent = sessoes.length;
+  closeModal('modalNovaSessao');
+  toast('Sessão marcada!');
+}
+
+function saveEdit() {
+  cliente.nome = document.getElementById('edit-nome').value;
+  cliente.email = document.getElementById('edit-email').value;
+  cliente.tel = document.getElementById('edit-tel').value;
+  cliente.lesoes = document.getElementById('edit-lesoes').value;
+  cliente.status = document.getElementById('edit-status').value;
+  closeModal('modalEditCliente');
+  load();
+  toast('Cliente atualizado!');
+}
+
+load();
+</script>
+</body>
+</html>

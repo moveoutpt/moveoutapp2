@@ -230,3 +230,16 @@ renderBlocos();
 </script>
 </body>
 </html>
+<script>
+// Load cliente from URL if coming from detalhe
+(function(){
+  const cid = new URLSearchParams(window.location.search).get('cliente');
+  if(cid) {
+    const map = {'1':'Maria Inês N.','2':'Joana Lima','3':'Marta H.'};
+    const sel = document.getElementById('sb-cliente');
+    if(sel) {
+      Array.from(sel.options).forEach(o => { if(o.text.includes(map[cid]||'')) o.selected = true; });
+    }
+  }
+})();
+</script>
